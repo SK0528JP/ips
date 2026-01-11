@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Photo Album</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+        .upload-area { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block; }
+        #gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 30px; }
+        .img-card { width: 200px; background: white; padding: 5px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .img-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 3px; }
+        button { cursor: pointer; background: #2ea44f; color: white; border: none; padding: 10px 20px; border-radius: 5px; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>マイ・フォトアルバム</h1>
+
+    <div class="upload-area">
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="uploadBtn" onclick="uploadImage()">アップロード</button>
+    </div>
+
+    <div id="gallery">読み込み中...</div>
+
+    <script>
+        // 【設定エリア：ここを書き換えてください】
+        const GITHUB_USER = 'sk0528jp';
+        const GITHUB_REPO = 'ips';
+        const GITHUB_TOKEN = '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';
+
+        // 画像を表示する機能
+        async function loadImages() {
+            const gallery = document.getElementById('gallery');
+            try {
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/images`);
+                const files = await res.json();
+                
+                gallery.innerHTML = ''; // クリア
+                files.forEach(file => {
+                    if (file.name !== '.gitkeep') {
+                        const div = document.createElement('div');
+                        div.className = 'img-card';
+                        div.innerHTML = `<img src="${file.download_url}"><p style="font-size:10px">${file.name}</p>`;
+                        gallery.appendChild(div);
+                    }
+                });
+            } catch (e) {
+                gallery.innerHTML = 'まだ画像がありません。';
+            }
+        }
+
+        // 画像をアップロードする機能
+        async function uploadImage() {
+            const fileInput = document.getElementById('fileInput');
+            const btn = document.getElementById('uploadBtn');
+            const file = fileInput.files[0];
+            if (!file) return alert('画像を選んでください');
+
+            btn.disabled = true;
+            btn.innerText = '送信中...';
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const content = reader.result.split(',')[1];
+                const fileName = `${Date.now()}-${file.name}`; // 重複防止のため時間を名前に付ける
+
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/images/${fileName}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: "Upload", content: content })
+                });
+
+                if (res.ok) {
+                    alert('成功！反映まで1分ほど待ってから再読み込みしてください。');
+                    fileInput.value = '';
+                    loadImages();
+                } else {
+                    alert('エラーが発生しました。設定を確認してください。');
+                }
+                btn.disabled = false;
+                btn.innerText = 'アップロード';
+            };
+        }
+
+        loadImages(); // 最初に画像を表示
+    </script>
+</body>
+</html>
