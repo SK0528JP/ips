@@ -3,90 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Photo Album</title>
+    <title>IPS</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
-        .upload-area { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block; }
-        #gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 30px; }
-        .img-card { width: 200px; background: white; padding: 5px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .img-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 3px; }
-        button { cursor: pointer; background: #2ea44f; color: white; border: none; padding: 10px 20px; border-radius: 5px; }
-        button:disabled { background: #ccc; }
+        /* 北欧風デザインシステム */
+        :root {
+            --bg-color: #f4f7f6;
+            --container-bg: #ffffff;
+            --text-main: #334e4e;
+            --accent-color: #8da399; /* くすみグリーン */
+            --border-color: #e0e5e4;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        /* アップロードエリア */
+        .upload-section {
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="password"], input[type="file"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #fafafa;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover { opacity: 0.8; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* ギャラリーエリア */
+        #gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .img-card {
+            background: var(--container-bg);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+        }
+
+        .img-card:hover { transform: translateY(-5px); }
+
+        .img-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
 
-    <h1>マイ・フォトアルバム</h1>
+<div class="container">
+    <header>
+        <h1>IPS</h1>
+        <p>Simple & Minimal Storage</p>
+    </header>
 
-    <div class="upload-area">
-        <input type="file" id="fileInput" accept="image/*">
-        <button id="uploadBtn" onclick="uploadImage()">アップロード</button>
+    <div class="upload-section">
+        <div class="input-group">
+            <input type="password" id="tokenInput" placeholder="GitHub Personal Access Token">
+        </div>
+        <div class="input-group">
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <button id="uploadBtn" onclick="uploadImage()">UPLOAD IMAGE</button>
     </div>
 
-    <div id="gallery">読み込み中...</div>
+    <div id="gallery">Loading images...</div>
 
-    <script>
-        // 【設定エリア：ここを書き換えてください】
-        const GITHUB_USER = 'sk0528jp';
-        const GITHUB_REPO = 'ips';
-        const GITHUB_TOKEN = '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';
+    <footer>
+        &copy; sk0528jp..
+    </footer>
+</div>
 
-        // 画像を表示する機能
-        async function loadImages() {
-            const gallery = document.getElementById('gallery');
-            try {
-                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/images`);
-                const files = await res.json();
-                
-                gallery.innerHTML = ''; // クリア
-                files.forEach(file => {
-                    if (file.name !== '.gitkeep') {
-                        const div = document.createElement('div');
-                        div.className = 'img-card';
-                        div.innerHTML = `<img src="${file.download_url}"><p style="font-size:10px">${file.name}</p>`;
-                        gallery.appendChild(div);
-                    }
-                });
-            } catch (e) {
-                gallery.innerHTML = 'まだ画像がありません。';
-            }
+<script>
+    const OWNER = 'sk0528jp';
+    const REPO = 'ips';
+    const STORAGE_KEY = 'ips_github_token';
+
+    // 起動時に保存されたトークンを復元
+    window.onload = () => {
+        const savedToken = localStorage.getItem(STORAGE_KEY);
+        if (savedToken) {
+            document.getElementById('tokenInput').value = savedToken;
         }
+        loadImages();
+    };
 
-        // 画像をアップロードする機能
-        async function uploadImage() {
-            const fileInput = document.getElementById('fileInput');
-            const btn = document.getElementById('uploadBtn');
-            const file = fileInput.files[0];
-            if (!file) return alert('画像を選んでください');
+    // 画像取得
+    async function loadImages() {
+        const gallery = document.getElementById('gallery');
+        try {
+            const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/images`);
+            if (!res.ok) throw new Error();
+            const files = await res.json();
+            
+            gallery.innerHTML = '';
+            files.reverse().forEach(file => { // 新しい順に表示
+                if (file.name !== '.gitkeep') {
+                    const card = document.createElement('div');
+                    card.className = 'img-card';
+                    card.innerHTML = `<img src="${file.download_url}" alt="image">`;
+                    gallery.appendChild(card);
+                }
+            });
+        } catch (e) {
+            gallery.innerHTML = '<p style="grid-column: 1/-1;">No images found.</p>';
+        }
+    }
 
-            btn.disabled = true;
-            btn.innerText = '送信中...';
+    // アップロード
+    async function uploadImage() {
+        const token = document.getElementById('tokenInput').value.trim();
+        const fileInput = document.getElementById('fileInput');
+        const btn = document.getElementById('uploadBtn');
+        const file = fileInput.files[0];
 
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = async () => {
-                const content = reader.result.split(',')[1];
-                const fileName = `${Date.now()}-${file.name}`; // 重複防止のため時間を名前に付ける
+        if (!token) return alert('Token is required.');
+        if (!file) return alert('Please select a file.');
 
-                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/images/${fileName}`, {
+        btn.disabled = true;
+        btn.innerText = 'UPLOADING...';
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const content = reader.result.split(',')[1];
+            const fileName = `images/${Date.now()}-${file.name}`;
+
+            try {
+                const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${fileName}`, {
                     method: 'PUT',
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: "Upload", content: content })
+                    headers: { 
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({ message: "upload photo", content: content })
                 });
 
                 if (res.ok) {
-                    alert('成功！反映まで1分ほど待ってから再読み込みしてください。');
+                    // 成功したらトークンをブラウザに記憶させる
+                    localStorage.setItem(STORAGE_KEY, token);
+                    alert('Successfully uploaded!');
                     fileInput.value = '';
                     loadImages();
                 } else {
-                    alert('エラーが発生しました。設定を確認してください。');
+                    const err = await res.json();
+                    alert('Error: ' + err.message);
                 }
+            } catch (e) {
+                alert('Connection error.');
+            } finally {
                 btn.disabled = false;
-                btn.innerText = 'アップロード';
-            };
-        }
+                btn.innerText = 'UPLOAD IMAGE';
+            }
+        };
+    }
+</script>
 
-        loadImages(); // 最初に画像を表示
-    </script>
 </body>
 </html>
